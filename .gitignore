@@ -1,0 +1,17 @@
+# Unity generated folders
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+UserSettings/
+
+# IDE
+.vscode/
+*.csproj
+*.sln
+
+# OS bordel
+.DS_Store
+Thumbs.db
