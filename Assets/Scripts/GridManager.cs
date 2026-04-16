@@ -23,6 +23,8 @@ public class GridManager : MonoBehaviour
     private GameObject[,] spawnedObjects;
 
     public Vector2Int PlayerStartPos { get; private set; }
+    public PlayerController Player { get; private set; }
+    public Vector2Int CurrentPlayerPos { get; private set; }
 
     public int Width;
     public int Height;
@@ -79,8 +81,16 @@ public class GridManager : MonoBehaviour
                         break;
                     case 'P':
                         PlayerStartPos = gridPos;
+                        CurrentPlayerPos = gridPos;
                         SpawnTile(floorPrefab, gridPos, worldPos, TileType.Empty);
-                        Instantiate(playerPrefab, worldPos, Quaternion.identity);
+
+                        GameObject playerObj = Instantiate(playerPrefab, worldPos, Quaternion.identity);
+                        Player = playerObj.GetComponent<PlayerController>();
+
+                        if (Player != null)
+                        {
+                            Player.Init(this, gridPos);
+                        }
                         break;
                     default:
                         Debug.LogWarning($"Unknown map char '{c}' at row {row}, col {col}");
@@ -150,7 +160,7 @@ public class GridManager : MonoBehaviour
         }
 
         // 2. start tile
-        Tile startTile = GetTile(PlayerStartPos);
+        Tile startTile = GetTile(CurrentPlayerPos);
         if (startTile == null)
         {
             Debug.LogWarning("PlayerStartPos tile not found.");
@@ -165,7 +175,7 @@ public class GridManager : MonoBehaviour
 
         // 3. BFS
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
-        queue.Enqueue(PlayerStartPos);
+        queue.Enqueue(CurrentPlayerPos);
         startTile.isReachable = true;
 
         Vector2Int[] directions = new Vector2Int[]
@@ -206,4 +216,107 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+
+    public List<Vector2Int> FindPath(Vector2Int start, Vector2Int target)
+    {
+        if (!IsInside(start) || !IsInside(target))
+            return null;
+
+        Tile startTile = GetTile(start);
+        Tile targetTile = GetTile(target);
+
+        if (startTile == null || targetTile == null)
+            return null;
+
+        if (!targetTile.isWalkable)
+            return null;
+
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+        HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+
+        queue.Enqueue(start);
+        visited.Add(start);
+
+        Vector2Int[] directions = new Vector2Int[]
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+
+            if (current == target)
+            {
+                return ReconstructPath(cameFrom, start, target);
+            }
+
+            foreach (Vector2Int dir in directions)
+            {
+                Vector2Int next = current + dir;
+
+                if (!IsInside(next))
+                    continue;
+
+                if (visited.Contains(next))
+                    continue;
+
+                Tile nextTile = GetTile(next);
+                if (nextTile == null || !nextTile.isWalkable)
+                    continue;
+
+                visited.Add(next);
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        return null;
+    }
+
+    private List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> cameFrom, Vector2Int start, Vector2Int target)
+    {
+        List<Vector2Int> path = new List<Vector2Int>();
+        Vector2Int current = target;
+
+        while (current != start)
+        {
+            path.Add(current);
+            current = cameFrom[current];
+        }
+
+        path.Reverse();
+        return path;
+    }
+
+    public void TryMoveTo(Vector2Int targetPos)
+    {
+        Tile targetTile = GetTile(targetPos);
+        if (targetTile == null)
+            return;
+
+        if (!targetTile.isWalkable)
+            return;
+
+        if (!targetTile.isReachable)
+            return;
+
+        if (Player == null || Player.IsMoving)
+            return;
+
+        List<Vector2Int> path = FindPath(CurrentPlayerPos, targetPos);
+        if (path == null || path.Count == 0)
+            return;
+
+        Player.MoveAlongPath(path, () =>
+        {
+            CurrentPlayerPos = targetPos;
+            RecalculateReachable();
+        });
+    }
+
 }
