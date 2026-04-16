@@ -99,3 +99,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GridPosition: {x: 0, y: 0}
   Type: 0
+  isWalkable: 1
+  isReachable: 0

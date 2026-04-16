@@ -35,6 +35,7 @@ public class GridManager : MonoBehaviour
         Height = mapData.Count;
 
         DrawMap();
+        RecalculateReachable();
     }
 
     public void DrawMap()
@@ -115,5 +116,94 @@ public class GridManager : MonoBehaviour
             originY + gridPos.y * tileSize,
             0f
         );
+    }
+
+    public bool IsInside(Vector2Int pos)
+    {
+        return pos.x >= 0 && pos.x < Width && pos.y >= 0 && pos.y < Height;
+    }
+
+    public Tile GetTile(Vector2Int pos)
+    {
+        if (!IsInside(pos)) return null;
+
+        GameObject obj = spawnedObjects[pos.x, pos.y];
+        if (obj == null) return null;
+
+        return obj.GetComponent<Tile>();
+    }
+
+    public void RecalculateReachable()
+    {
+        // 1. reset
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                Tile tile = GetTile(new Vector2Int(x, y));
+                if (tile != null)
+                {
+                    tile.isReachable = false;
+                    tile.ResetHighlight();
+                }
+            }
+        }
+
+        // 2. start tile
+        Tile startTile = GetTile(PlayerStartPos);
+        if (startTile == null)
+        {
+            Debug.LogWarning("PlayerStartPos tile not found.");
+            return;
+        }
+
+        if (!startTile.isWalkable)
+        {
+            Debug.LogWarning("Player start tile is not walkable.");
+            return;
+        }
+
+        // 3. BFS
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        queue.Enqueue(PlayerStartPos);
+        startTile.isReachable = true;
+
+        Vector2Int[] directions = new Vector2Int[]
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+
+            foreach (Vector2Int dir in directions)
+            {
+                Vector2Int next = current + dir;
+
+                if (!IsInside(next))
+                    continue;
+
+                Tile nextTile = GetTile(next);
+                if (nextTile == null)
+                    continue;
+
+                if (!nextTile.isWalkable)
+                    continue;
+
+                if (nextTile.isReachable)
+                    continue;
+
+                nextTile.isReachable = true;
+                if (nextTile.Type == TileType.Empty)
+                {
+                    nextTile.Highlight();
+                }
+                queue.Enqueue(next);
+            }
+        }
     }
 }
