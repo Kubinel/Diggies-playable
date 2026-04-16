@@ -12,37 +12,7 @@ public class Tile : MonoBehaviour
         GridPosition = gridPosition;
         Type = type;
 
-        if (Type == TileType.Empty)
-        {
-            SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr == null) return;
-
-            sr.color = Color.gray;
-        }
-
         isWalkable = type == TileType.Empty || type == TileType.Key || type == TileType.Goal;
         isReachable = false;
-    }
-
-    public void Highlight()
-    {
-        if (Type == TileType.Empty)
-        {
-            SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr == null) return;
-
-            sr.color = Color.white;
-        }
-    }
-
-    public void ResetHighlight()
-    {
-        if (Type == TileType.Empty)
-        {
-            SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr == null) return;
-
-            sr.color = Color.gray;
-        }
     }
 }

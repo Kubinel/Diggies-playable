@@ -24,6 +24,13 @@ public class ClickToMove : MonoBehaviour
         if (tile == null)
             return;
 
-        gridManager.TryMoveTo(tile.GridPosition);
+        if (tile.Type == TileType.Diggable)
+        {
+            gridManager.TryMoveToDiggable(tile.GridPosition);
+        }
+        else
+        {
+            gridManager.TryMoveTo(tile.GridPosition);
+        }
     }
 }

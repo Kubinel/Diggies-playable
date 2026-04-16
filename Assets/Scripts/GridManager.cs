@@ -154,7 +154,6 @@ public class GridManager : MonoBehaviour
                 if (tile != null)
                 {
                     tile.isReachable = false;
-                    tile.ResetHighlight();
                 }
             }
         }
@@ -208,10 +207,6 @@ public class GridManager : MonoBehaviour
                     continue;
 
                 nextTile.isReachable = true;
-                if (nextTile.Type == TileType.Empty)
-                {
-                    nextTile.Highlight();
-                }
                 queue.Enqueue(next);
             }
         }
@@ -315,6 +310,74 @@ public class GridManager : MonoBehaviour
         Player.MoveAlongPath(path, () =>
         {
             CurrentPlayerPos = targetPos;
+            RecalculateReachable();
+        });
+    }
+
+    public Vector2Int? GetAdjacentReachableTile(Vector2Int diggablePos)
+    {
+        Vector2Int[] directions = new Vector2Int[]
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        Vector2Int? bestPos = null;
+        int bestDistance = int.MaxValue;
+
+        foreach (Vector2Int dir in directions)
+        {
+            Vector2Int adjacent = diggablePos + dir;
+
+            if (!IsInside(adjacent))
+                continue;
+
+            Tile tile = GetTile(adjacent);
+            if (tile == null)
+                continue;
+
+            if (!tile.isWalkable)
+                continue;
+
+            if (!tile.isReachable)
+                continue;
+
+            int distance = Mathf.Abs(adjacent.x - CurrentPlayerPos.x) + Mathf.Abs(adjacent.y - CurrentPlayerPos.y);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestPos = adjacent;
+            }
+        }
+
+        return bestPos;
+    }
+
+    public void TryMoveToDiggable(Vector2Int diggablePos)
+    {
+        Tile diggableTile = GetTile(diggablePos);
+        if (diggableTile == null)
+            return;
+
+        if (diggableTile.Type != TileType.Diggable)
+            return;
+
+        if (Player == null || Player.IsMoving)
+            return;
+
+        Vector2Int? adjacentPos = GetAdjacentReachableTile(diggablePos);
+        if (adjacentPos == null)
+            return;
+
+        List<Vector2Int> path = FindPath(CurrentPlayerPos, adjacentPos.Value);
+        if (path == null)
+            return;
+
+        Player.MoveAlongPath(path, () =>
+        {
+            CurrentPlayerPos = adjacentPos.Value;
             RecalculateReachable();
         });
     }
