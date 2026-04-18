@@ -423,6 +423,7 @@ MonoBehaviour:
   gatePrefab: {fileID: 939769841514573123, guid: d26589a96f70a8c48b1683a36c505d23, type: 3}
   goalPrefab: {fileID: 3746943897723913363, guid: 1a99b8d092e6f1f478f3924e5999677f, type: 3}
   playerPrefab: {fileID: 5128844888997893102, guid: cbbc392886874ed4c891c99b9f508314, type: 3}
+  diamondsParticleSystem: {fileID: 2991398517147929815, guid: 632b6670c0067af4688e70623483f45d, type: 3}
   tileSize: 1
   mapRoot: {fileID: 1862959846}
   Width: 0

@@ -15,6 +15,9 @@ public class GridManager : MonoBehaviour
     public GameObject goalPrefab;
     public GameObject playerPrefab;
 
+
+    public GameObject diamondsParticleSystem;
+
     [Header("Settings")]
     public float tileSize = 1f;
     public Transform mapRoot;
@@ -149,7 +152,6 @@ public class GridManager : MonoBehaviour
 
     public void RecalculateReachable()
     {
-        // 1. reset
         for (int x = 0; x < Width; x++)
         {
             for (int y = 0; y < Height; y++)
@@ -162,7 +164,6 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        // 2. start tile
         Tile startTile = GetTile(CurrentPlayerPos);
         if (startTile == null)
         {
@@ -176,7 +177,6 @@ public class GridManager : MonoBehaviour
             return;
         }
 
-        // 3. BFS
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
         queue.Enqueue(CurrentPlayerPos);
         startTile.isReachable = true;
@@ -314,8 +314,52 @@ public class GridManager : MonoBehaviour
         Player.MoveAlongPath(path, () =>
         {
             CurrentPlayerPos = targetPos;
+            TryGetKey(targetPos);
+            TryGetChest(targetPos);
             RecalculateReachable();
         });
+    }
+
+    private void TryGetKey(Vector2Int pos)
+    {
+        Tile tile = GetTile(pos);
+        if (tile == null)
+            return;
+
+        if (tile.Type != TileType.Key)
+            return;
+
+        tile.Type = TileType.Empty;
+        tile.isWalkable = true;
+
+        SetEmptyTile(pos);
+
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                Tile t = GetTile(new Vector2Int(x, y));
+                if (t != null && t.Type == TileType.Gate)
+                {
+                    t.locked = false;
+                }
+            }
+        }
+    }
+
+    private void TryGetChest(Vector2Int pos)
+    {
+        Tile tile = GetTile(pos);
+        if (tile == null)
+            return;
+
+        if (tile.Type != TileType.Goal)
+            return;
+
+        tile.Type = TileType.Empty;
+        tile.isWalkable = true;
+
+        Instantiate(diamondsParticleSystem, tile.transform.position, Quaternion.identity);
     }
 
     public Vector2Int? GetAdjacentReachableTile(Vector2Int diggablePos)
@@ -382,8 +426,43 @@ public class GridManager : MonoBehaviour
         Player.MoveAlongPath(path, () =>
         {
             CurrentPlayerPos = adjacentPos.Value;
+            DigTile(diggablePos);
+        });
+    }
+
+    private void DigTile(Vector2Int pos)
+    {
+        Player.Dig();
+        Tile tile = GetTile(pos);
+        if (tile == null || tile.Type != TileType.Diggable)
+            return;
+
+        tile.BreakTile(() =>
+        {
+            tile.Type = TileType.Empty;
+            tile.isWalkable = true;
+            SetEmptyTile(pos);
+            Player.DoneDigging();
             RecalculateReachable();
         });
+    }
+
+    private void SetEmptyTile(Vector2Int pos)
+    {
+        Tile tile = GetTile(pos);
+        if (tile == null)
+            return;
+
+        tile.Type = TileType.Empty;
+        tile.isWalkable = true;
+
+        SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sprite = floorPrefab.GetComponent<SpriteRenderer>().sprite;
+            sr.color = Color.white;
+            tile.GetComponent<Transform>().localScale = new Vector3(0.33f, 0.35f, 1);
+        }
     }
 
 }
