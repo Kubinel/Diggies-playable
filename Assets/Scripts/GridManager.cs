@@ -68,15 +68,19 @@ public class GridManager : MonoBehaviour
                         SpawnTile(floorPrefab, gridPos, worldPos, TileType.Empty);
                         break;
                     case 'D':
+                        SpawnTile(floorPrefab, gridPos, worldPos, TileType.Empty);
                         SpawnTile(diggablePrefab, gridPos, worldPos, TileType.Diggable);
                         break;
                     case 'K':
+                        SpawnTile(floorPrefab, gridPos, worldPos, TileType.Empty);
                         SpawnTile(keyPrefab, gridPos, worldPos, TileType.Key);
                         break;
                     case 'B':
+                        SpawnTile(floorPrefab, gridPos, worldPos, TileType.Empty);
                         SpawnTile(gatePrefab, gridPos, worldPos, TileType.Gate);
                         break;
                     case 'G':
+                        SpawnTile(floorPrefab, gridPos, worldPos, TileType.Empty);
                         SpawnTile(goalPrefab, gridPos, worldPos, TileType.Goal);
                         break;
                     case 'P':

@@ -6,6 +6,8 @@ public class Tile : MonoBehaviour
     public TileType Type;
     public bool isWalkable;
     public bool isReachable;
+    public bool locked;
+    public Sprite OpenGate;
 
     public void Init(Vector2Int gridPosition, TileType type)
     {
@@ -13,6 +15,17 @@ public class Tile : MonoBehaviour
         Type = type;
 
         isWalkable = type == TileType.Empty || type == TileType.Key || type == TileType.Goal;
+        locked = type == TileType.Gate;
         isReachable = false;
+    }
+
+    public void Update()
+    {
+        if (!locked && Type == TileType.Gate)
+        {
+            GetComponent<SpriteRenderer>().sprite = OpenGate;
+            isWalkable = true;
+            locked = false;
+        }
     }
 }
