@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -40,6 +41,13 @@ public class GridManager : MonoBehaviour
 
         DrawMap();
         RecalculateReachable();
+    }
+
+    public static event Action Win;
+
+    public void TriggerWin()
+    {
+        Win?.Invoke();
     }
 
     public void DrawMap()
@@ -357,7 +365,7 @@ public class GridManager : MonoBehaviour
 
         tile.Type = TileType.Empty;
         tile.isWalkable = true;
-
+        Win?.Invoke();
         Instantiate(diamondsParticleSystem, tile.transform.position, Quaternion.Euler(-90,0,0));
     }
 

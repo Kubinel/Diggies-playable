@@ -1,4 +1,4 @@
-using Unity.VisualScripting;
+using System;
 using UnityEngine;
 
 public class ClickToMove : MonoBehaviour
@@ -7,7 +7,6 @@ public class ClickToMove : MonoBehaviour
     public GridManager gridManager;
 
     [SerializeField] private GameObject hand;
-    [SerializeField] private GameObject Ui;
     [SerializeField] private float handMoveAmount = 1f;
     [SerializeField] private float handMoveSpeed = 2f;
 
@@ -15,8 +14,40 @@ public class ClickToMove : MonoBehaviour
     private Transform handTransform;
     private int numberOfClicks = 0;
 
+    private bool allowMove = false;
+
+    public static event Action Tutorial;
+    public static event Action TutorialDone;
+
+    private void OnEnable()
+    {
+        GridManager.Win += StopMoving;
+    }
+
+    private void OnDisable()
+    {
+        GridManager.Win -= StopMoving;
+    }
+
+    private void StopMoving()
+    {
+        allowMove = false;
+    }
+
+    public void ShowTutorial()
+    {
+        Tutorial?.Invoke();
+    }
+
+    public void FinishTutorial()
+    {
+        TutorialDone?.Invoke();
+    }
+
     void Start()
     {
+        allowMove = true;
+        Tutorial?.Invoke();
         numberOfClicks = 0;
         if (hand != null)
         {
@@ -35,12 +66,14 @@ public class ClickToMove : MonoBehaviour
             handTransform.localPosition = handStartPos + new Vector3(0f, offsetY, 0f);
         }
         
-        if (!Input.GetMouseButtonDown(0))
+        if (!Input.GetMouseButtonDown(0) || !allowMove)
             return;
 
-        if (Ui != null && numberOfClicks == 0)
+        if (numberOfClicks == 0)
         {
-            Ui.SetActive(false);
+            TutorialDone?.Invoke();
+            numberOfClicks++;
+            return;
         }
 
         numberOfClicks++;
