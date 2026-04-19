@@ -15,7 +15,6 @@ public class GridManager : MonoBehaviour
     public GameObject goalPrefab;
     public GameObject playerPrefab;
 
-
     public GameObject diamondsParticleSystem;
 
     [Header("Settings")]
@@ -359,7 +358,7 @@ public class GridManager : MonoBehaviour
         tile.Type = TileType.Empty;
         tile.isWalkable = true;
 
-        Instantiate(diamondsParticleSystem, tile.transform.position, Quaternion.identity);
+        Instantiate(diamondsParticleSystem, tile.transform.position, Quaternion.Euler(-90,0,0));
     }
 
     public Vector2Int? GetAdjacentReachableTile(Vector2Int diggablePos)
@@ -432,7 +431,11 @@ public class GridManager : MonoBehaviour
 
     private void DigTile(Vector2Int pos)
     {
-        Player.Dig();
+        if (CurrentPlayerPos.x > pos.x && CurrentPlayerPos.y == pos.y)      Player.Dig(1); // right
+        else if (CurrentPlayerPos.x < pos.x && CurrentPlayerPos.y == pos.y) Player.Dig(2); // left
+        else if (CurrentPlayerPos.y > pos.y && CurrentPlayerPos.x == pos.x) Player.Dig(3); // up
+        else                                                                Player.Dig(0); // down
+
         Tile tile = GetTile(pos);
         if (tile == null || tile.Type != TileType.Diggable)
             return;

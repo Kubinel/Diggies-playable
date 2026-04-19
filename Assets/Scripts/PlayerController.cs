@@ -7,8 +7,9 @@ using UnityEngine.Rendering;
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 4f;
+    public PickAxe pickaxe;
 
-
+    private PickAxe myPickaxe;
     private GridManager gridManager;
     private Vector2Int currentGridPos;
 
@@ -40,11 +41,11 @@ public class PlayerController : MonoBehaviour
 
             if (a % 2 == 0)
             {
-                transform.rotation = Quaternion.Euler(0, 0, -15); // tilt right
+                transform.rotation = Quaternion.Euler(0, 0, -15);
             }
             else
             {
-                transform.rotation = Quaternion.Euler(0, 0, 15); // tilt left
+                transform.rotation = Quaternion.Euler(0, 0, 15);
             }
             a++;
 
@@ -68,13 +69,19 @@ public class PlayerController : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    public void Dig()
-    {
+    public void Dig(int rotation)
+    {   
+        if (myPickaxe == null)
+        {
+            myPickaxe = Instantiate(pickaxe, transform);
+        }
+        myPickaxe.Dig(rotation);
         IsMoving = true;
     }
 
     public void DoneDigging()
     {
+        myPickaxe.StopDig();
         IsMoving = false;
     }
 }
