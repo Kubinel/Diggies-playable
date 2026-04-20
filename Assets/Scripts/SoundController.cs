@@ -7,6 +7,7 @@ public class SoundController : MonoBehaviour
     [SerializeField] private AudioSource winSound;
     [SerializeField] private AudioSource jingle;
     [SerializeField] private AudioSource hit;
+    [SerializeField] private AudioSource collect;
 
     void Awake()
     {
@@ -20,6 +21,7 @@ public class SoundController : MonoBehaviour
         PickAxe.DigSound += PlayDigSound;
         PickAxe.HitSound += PlayHitSound;
         GridManager.Win += PlayWinSound;
+        GridManager.Collect += PlayCollectSound;
     }
 
     private void OnDisable()
@@ -27,6 +29,13 @@ public class SoundController : MonoBehaviour
         PickAxe.DigSound -= PlayDigSound;
         PickAxe.HitSound -= PlayHitSound;
         GridManager.Win -= PlayWinSound;
+        GridManager.Collect -= PlayCollectSound;
+    }
+
+    private void PlayCollectSound()
+    {
+        if (collect != null)
+            collect.Play();
     }
 
     private void PlayHitSound()

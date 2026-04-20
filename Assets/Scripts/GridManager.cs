@@ -32,6 +32,17 @@ public class GridManager : MonoBehaviour
     public int Width;
     public int Height;
 
+    private static readonly Vector2Int[] Directions =
+    {
+        Vector2Int.up,
+        Vector2Int.down,
+        Vector2Int.left,
+        Vector2Int.right
+    };
+
+    public static event Action Win;
+    public static event Action Collect;
+
     void Awake()
     {
         Map map = new Map();
@@ -42,8 +53,6 @@ public class GridManager : MonoBehaviour
         DrawMap();
         RecalculateReachable();
     }
-
-    public static event Action Win;
 
     public void TriggerWin()
     {
@@ -157,7 +166,7 @@ public class GridManager : MonoBehaviour
         return obj.GetComponent<Tile>();
     }
 
-    public void RecalculateReachable()
+    private void ResetReachable()
     {
         for (int x = 0; x < Width; x++)
         {
@@ -165,11 +174,31 @@ public class GridManager : MonoBehaviour
             {
                 Tile tile = GetTile(new Vector2Int(x, y));
                 if (tile != null)
-                {
                     tile.isReachable = false;
-                }
             }
         }
+    }
+
+    private IEnumerable<Vector2Int> GetWalkableNeighbors(Vector2Int pos)
+    {
+        foreach (var dir in Directions)
+        {
+            Vector2Int next = pos + dir;
+
+            if (!IsInside(next))
+                continue;
+
+            Tile tile = GetTile(next);
+            if (tile == null || !tile.isWalkable)
+                continue;
+
+            yield return next;
+        }
+    }
+
+    public void RecalculateReachable()
+    {
+        ResetReachable();
 
         Tile startTile = GetTile(CurrentPlayerPos);
         if (startTile == null)
@@ -188,31 +217,13 @@ public class GridManager : MonoBehaviour
         queue.Enqueue(CurrentPlayerPos);
         startTile.isReachable = true;
 
-        Vector2Int[] directions = new Vector2Int[]
-        {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left,
-            Vector2Int.right
-        };
-
         while (queue.Count > 0)
         {
             Vector2Int current = queue.Dequeue();
 
-            foreach (Vector2Int dir in directions)
+            foreach (Vector2Int next in GetWalkableNeighbors(current))
             {
-                Vector2Int next = current + dir;
-
-                if (!IsInside(next))
-                    continue;
-
                 Tile nextTile = GetTile(next);
-                if (nextTile == null)
-                    continue;
-
-                if (!nextTile.isWalkable)
-                    continue;
 
                 if (nextTile.isReachable)
                     continue;
@@ -231,10 +242,7 @@ public class GridManager : MonoBehaviour
         Tile startTile = GetTile(start);
         Tile targetTile = GetTile(target);
 
-        if (startTile == null || targetTile == null)
-            return null;
-
-        if (!targetTile.isWalkable)
+        if (startTile == null || targetTile == null || !startTile.isWalkable || !targetTile.isWalkable)
             return null;
 
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
@@ -244,35 +252,16 @@ public class GridManager : MonoBehaviour
         queue.Enqueue(start);
         visited.Add(start);
 
-        Vector2Int[] directions = new Vector2Int[]
-        {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left,
-            Vector2Int.right
-        };
-
         while (queue.Count > 0)
         {
             Vector2Int current = queue.Dequeue();
 
             if (current == target)
-            {
                 return ReconstructPath(cameFrom, start, target);
-            }
 
-            foreach (Vector2Int dir in directions)
+            foreach (Vector2Int next in GetWalkableNeighbors(current))
             {
-                Vector2Int next = current + dir;
-
-                if (!IsInside(next))
-                    continue;
-
                 if (visited.Contains(next))
-                    continue;
-
-                Tile nextTile = GetTile(next);
-                if (nextTile == null || !nextTile.isWalkable)
                     continue;
 
                 visited.Add(next);
@@ -340,6 +329,7 @@ public class GridManager : MonoBehaviour
         tile.isWalkable = true;
 
         SetEmptyTile(pos);
+        Collect?.Invoke();
 
         for (int x = 0; x < Width; x++)
         {
@@ -349,6 +339,7 @@ public class GridManager : MonoBehaviour
                 if (t != null && t.Type == TileType.Gate)
                 {
                     t.locked = false;
+                    t.isWalkable = true;
                 }
             }
         }
